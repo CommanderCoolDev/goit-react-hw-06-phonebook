@@ -1,74 +1,89 @@
-import React, { Component } from 'react';
+import { useState } from 'react';
 import shortid from 'shortid';
 import s from './ContactForm.module.css';
-import PropTypes from 'prop-types';
+import { useSelector, useDispatch } from 'react-redux';
+import contactsActions from '../../redux/contact/contacts-actions';
+import { getContacts } from '../../redux/contact/contacts-selectors';
 
-export default class ContactForm extends Component {
-  state = {
-    name: '',
-    number: '',
-  };
+export default function ContactForm() {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
 
-  nameRandomId = shortid.generate();
-  numberRandomId = shortid.generate();
+  const contactNameId = shortid.generate();
+  const contactNumberId = shortid.generate();
 
-  handleChange = e => {
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
+
+  const handleChange = e => {
     const { name, value } = e.currentTarget;
-    this.setState({ [name]: value });
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'number':
+        setNumber(value);
+        break;
+      default:
+        return;
+    }
   };
 
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
+    if (name === '') {
+      alert(`Введите, пожалуйста, имя контакта.`);
+      return;
+    }
 
-    this.props.onSubmit(this.state);
-    this.reset();
+    if (number === '') {
+      alert(`Введите, пожалуйста, номер телефона контакта.`);
+      return;
+    }
+
+    if (contacts.find(contact => contact.name === name)) {
+      alert(`${name} is already in contacts.`);
+      reset();
+      return;
+    }
+
+    dispatch(contactsActions.addContact(name, number));
+    reset();
   };
 
-  reset = () => {
-    this.setState({ name: '', number: '' });
+  const reset = () => {
+    setName('');
+    setNumber('');
   };
 
-  render() {
-    return (
-      <div>
-        <form onSubmit={this.handleSubmit} className={s.form}>
-          <label className={s.label} htmlFor={this.nameRandomId}>
-            Name:
-            <input
-              onChange={this.handleChange}
-              value={this.state.name}
-              className={s.input}
-              type="text"
-              name="name"
-              pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-              title="Имя может состоять только из букв, апострофа, тире и пробелов. Например Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan и т. п."
-              required
-            />
-          </label>
+  return (
+    <form className={s.form} onSubmit={handleSubmit}>
+      <label className={s.label} htmlFor={contactNameId}>
+        Name
+        <input
+          className={s.input}
+          type="text"
+          name="name"
+          value={name}
+          onChange={handleChange}
+          id={contactNameId}
+        />
+      </label>
+      <label className={s.label} htmlFor={contactNumberId}>
+        Number
+        <input
+          className={s.input}
+          type="text"
+          name="number"
+          value={number}
+          onChange={handleChange}
+          id={contactNumberId}
+        />
+      </label>
 
-          <label htmlFor={this.numberRandomId} className={s.label}>
-            Number:
-            <input
-              className="{ }"
-              value={this.state.number}
-              id={this.numberRandomId}
-              onChange={this.handleChange}
-              name="number"
-              type="tel"
-              pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-              title="Номер телефона должен состоять цифр и может содержать пробелы, тире, круглые скобки и может начинаться с +"
-              required
-            />
-          </label>
-          <button type="submit" className={s.btn}>
-            Add Contact
-          </button>
-        </form>
-      </div>
-    );
-  }
+      <button className={s.button} type="submit">
+        Add contact
+      </button>
+    </form>
+  );
 }
-
-ContactForm.propTypes = {
-  onSubmit: PropTypes.func.isRequired,
-};
