@@ -81,7 +81,7 @@ export default function ContactForm() {
         />
       </label>
 
-      <button className={s.button} type="submit">
+      <button className={s.btn} type="submit">
         Add contact
       </button>
     </form>
